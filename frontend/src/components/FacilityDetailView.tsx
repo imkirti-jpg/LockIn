@@ -3,6 +3,7 @@ import { api } from '../api/client'
 import type { Facility, Slot, WaitlistEntry } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useRealtimeAvailability } from '../realtime/useRealtimeAvailability'
+import { getFacilityImages } from '../assets/facilities'
 
 interface FacilityDetailViewProps {
   facilityId: string
@@ -156,17 +157,17 @@ export const FacilityDetailView: React.FC<FacilityDetailViewProps> = ({
       if (reason === 'booking_window_not_open' || err.status === 409 && reason === 'booking_window_not_open') {
         setActionMessage({
           type: 'error',
-          text: 'BOOKING WINDOW NOT OPEN: This slot requires priority eligibility or earlier booking window.',
+          text: 'Booking window not open: this slot requires priority eligibility or an earlier booking window.',
         })
       } else if (err.status === 409) {
         setActionMessage({
           type: 'error',
-          text: 'Slot just taken! Another student won the race.',
+          text: 'Slot just taken — another student won the race.',
         })
       } else if (err.status === 410) {
         setActionMessage({
           type: 'error',
-          text: 'Claim window expired. Slot was offered to next student.',
+          text: 'Claim window expired. Slot was offered to the next student.',
         })
       } else {
         setActionMessage({
@@ -186,238 +187,211 @@ export const FacilityDetailView: React.FC<FacilityDetailViewProps> = ({
 
   if (loading && !facility) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-gray-400 font-mono gap-3">
-        <div className="w-6 h-6 border-2 border-[#C97A2B] border-t-transparent rounded-full animate-spin" />
-        Loading facility schedule...
+      <div className="flex flex-col items-center justify-center py-24 text-[var(--color-ink-soft)] gap-3">
+        <div className="w-5 h-5 border-2 border-[var(--color-ember)] border-t-transparent rounded-full animate-spin" />
+        <span className="eyebrow">Loading schedule</span>
       </div>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 flex flex-col gap-6">
-      {/* Top Header & Back Button */}
-      <div className="flex items-center justify-between border-b border-[#2D373E] pb-4">
-        <button
-          onClick={onBack}
-          className="text-xs font-mono uppercase text-[#C97A2B] hover:underline flex items-center gap-1"
+    <div>
+      {/* Full-bleed hero banner, breaks out of the reading column for a magazine feel */}
+      {facility && (
+        <div
+          className="w-full h-[260px] md:h-[340px] bg-cover bg-center relative"
+          style={{ backgroundImage: `url(${getFacilityImages(facility.sport_type).hero})` }}
         >
-          ← Back to Discovery
-        </button>
-        <div className="flex items-center gap-3 text-xs font-mono">
-          {isPriorityEligible && (
-            <span className="bg-[#C97A2B] text-black font-bold uppercase text-[10px] px-2 py-0.5 rounded">
-              ★ PRIORITY ELIGIBLE
-            </span>
-          )}
-          <div className="flex items-center gap-1.5 bg-[#121619] border border-[#2D373E] px-2.5 py-1 rounded">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                realtimeStatus === 'connected'
-                  ? 'bg-emerald-500 animate-pulse'
-                  : realtimeStatus === 'connecting'
-                  ? 'bg-amber-500'
-                  : 'bg-red-500'
-              }`}
-            />
-            <span className="text-[10px] uppercase font-bold text-gray-300">
-              REALTIME: {realtimeStatus}
-            </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-forest-deep)]/85 via-[var(--color-forest-deep)]/15 to-transparent" />
+          <div className="relative max-w-4xl mx-auto px-6 md:px-10 h-full flex flex-col justify-between py-6">
+            <button
+              onClick={onBack}
+              className="text-sm text-[var(--color-cream)]/80 hover:text-[var(--color-cream)] transition-colors inline-flex items-center gap-1 w-fit"
+            >
+              ← Back to discovery
+            </button>
+            <div>
+              <span className="eyebrow text-[var(--color-ember)] capitalize">{facility.sport_type}</span>
+              <h2 className="font-[var(--font-display)] text-[40px] leading-tight text-[var(--color-cream)]">
+                {facility.name}
+              </h2>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      <div className="max-w-4xl mx-auto px-6 md:px-10 py-10">
 
       {facility && (
-        <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-mono uppercase text-[#C97A2B]">{facility.sport_type}</span>
-            <h2 className="text-2xl font-bold text-white font-mono">{facility.name}</h2>
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              Slot Duration: {facility.slot_length_minutes} Minutes • Normal Window: 24h • Priority Window: 72h
-            </p>
-          </div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 hair mb-8">
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            {facility.slot_length_minutes} minute slots · normal window 24h · priority window 72h
+            {isPriorityEligible && <span className="text-[var(--color-status-open)]"> · you have priority access</span>}
+          </p>
 
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <label className="text-gray-400 uppercase">Date:</label>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-[var(--color-ink-soft)]">Date</label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-[#121619] border border-[#2D373E] text-white px-3 py-1.5 rounded focus:outline-none focus:border-[#1F4B3F]"
+              className="field-underline text-[var(--color-ink)]"
             />
           </div>
         </div>
       )}
 
       {actionMessage && (
-        <div
-          className={`p-3 rounded text-xs font-mono ${
-            actionMessage.type === 'success'
-              ? 'bg-emerald-950 border border-emerald-800 text-emerald-300'
-              : 'bg-red-950 border border-red-800 text-red-300'
-          }`}
+        <p
+          className="mb-6 text-sm"
+          style={{
+            color: actionMessage.type === 'success' ? 'var(--color-status-open)' : 'var(--color-status-full)',
+          }}
         >
           {actionMessage.text}
-        </div>
+        </p>
       )}
 
-      {error && (
-        <div className="p-4 bg-red-950/40 border border-red-800 rounded font-mono text-red-300 text-xs">
-          {error}
-        </div>
-      )}
+      {error && <p className="mb-6 text-sm text-[var(--color-status-full)]">{error}</p>}
 
-      {/* Slot Grid Section */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-gray-400 mb-4 flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-[#C97A2B]" />
-            Available Time Slots ({selectedDate})
-          </span>
-          <span className="text-[10px] text-gray-500 font-normal">FIFO Waitlist & Priority Windows Active</span>
-        </h3>
+      {/* Time slots — plain buttons distinguished by an underline, not a boxed grid */}
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="eyebrow text-[var(--color-ink-soft)]">Available time slots</h3>
+        <span className="eyebrow text-[var(--color-ink-soft)]/60">
+          {realtimeStatus === 'connected' ? 'Live' : 'Syncing'}
+        </span>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {slots.map((slot) => {
-            const isOpen = slot.status === 'open'
-            const isFull = slot.status === 'full'
+      <div className="flex flex-wrap gap-2.5">
+        {slots.map((slot) => {
+          const isOpen = slot.status === 'open'
+          const isFull = slot.status === 'full'
 
-            // Check if current user has an active waitlist entry for this slot
-            const userWaitlist = waitlistEntries.find(
-              (w) =>
-                w.facility_id === facility?.id &&
-                w.slot_start === slot.start_time &&
-                ['waiting', 'offered'].includes(w.status)
+          const userWaitlist = waitlistEntries.find(
+            (w) =>
+              w.facility_id === facility?.id &&
+              w.slot_start === slot.start_time &&
+              ['waiting', 'offered'].includes(w.status)
+          )
+
+          const isOffered = userWaitlist?.status === 'offered'
+
+          const label = `${formatTime(slot.start_time)}–${formatTime(slot.end_time)}`
+
+          if (isOffered) {
+            return (
+              <button
+                key={slot.slot_id}
+                onClick={() => handleOpenConfirmModal(slot, userWaitlist)}
+                className="btn-primary px-4 py-2.5 text-sm animate-pulse"
+              >
+                {label} · Claim now
+              </button>
             )
+          }
 
-            const isOffered = userWaitlist?.status === 'offered'
+          if (isOpen) {
+            return (
+              <button
+                key={slot.slot_id}
+                onClick={() => handleOpenConfirmModal(slot)}
+                className="px-4 py-2.5 text-sm text-[var(--color-ink)] border-b-2 border-[var(--color-status-open)] hover:bg-[var(--color-paper-dim)] transition-colors rounded-t-sm"
+              >
+                {label}
+              </button>
+            )
+          }
 
+          if (isFull && userWaitlist) {
             return (
               <div
                 key={slot.slot_id}
-                className={`p-3 rounded border font-mono text-xs flex flex-col justify-between gap-3 transition-all ${
-                  isOffered
-                    ? 'bg-[#2A1D0E] border-[#C97A2B] text-white shadow-lg'
-                    : isOpen
-                    ? 'bg-[#16372E]/50 border-[#1F4B3F] text-white'
-                    : isFull
-                    ? 'bg-[#121619] border-[#2D373E] text-gray-400'
-                    : 'bg-[#121619] border-[#2D373E] text-gray-500'
-                }`}
+                className="px-4 py-2.5 text-sm text-[var(--color-status-filling)] border-b-2 border-[var(--color-status-filling)]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm">
-                    {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
-                  </span>
-                  <span
-                    className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
-                      isOffered
-                        ? 'bg-[#C97A2B] text-black font-bold animate-pulse'
-                        : isOpen
-                        ? 'bg-[#10B981]/20 text-[#10B981]'
-                        : isFull
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'bg-gray-800 text-gray-500'
-                    }`}
-                  >
-                    {isOffered ? 'CLAIM AVAILABLE' : slot.status}
-                  </span>
-                </div>
-
-                {isOffered ? (
-                  <button
-                    onClick={() => handleOpenConfirmModal(slot, userWaitlist)}
-                    className="w-full bg-[#C97A2B] hover:bg-[#D98A3B] text-black font-bold uppercase text-xs py-2 rounded transition-colors"
-                  >
-                    CLAIM SLOT NOW
-                  </button>
-                ) : isOpen ? (
-                  <button
-                    onClick={() => handleOpenConfirmModal(slot)}
-                    className="w-full bg-[#1F4B3F] hover:bg-[#2A6354] text-white font-bold uppercase text-xs py-2 rounded transition-colors border border-[#2A6354]"
-                  >
-                    BOOK SLOT
-                  </button>
-                ) : isFull ? (
-                  userWaitlist ? (
-                    <div className="text-[11px] text-[#C97A2B] font-semibold text-center py-1 bg-[#121619] border border-[#2D373E] rounded">
-                      WAITLISTED (#{userWaitlist.position} IN LINE)
-                    </div>
-                  ) : (
-                    <button
-                      disabled={actionLoading}
-                      onClick={() => handleJoinWaitlist(slot)}
-                      className="w-full bg-[#121619] hover:bg-gray-800 text-[#C97A2B] border border-[#C97A2B]/40 font-bold uppercase text-xs py-2 rounded transition-colors"
-                    >
-                      + JOIN WAITLIST
-                    </button>
-                  )
-                ) : (
-                  <div className="text-[10px] text-gray-500 text-center py-1">UNAVAILABLE</div>
-                )}
+                {label} · #{userWaitlist.position} in line
               </div>
             )
-          })}
-        </div>
+          }
 
-        {slots.length === 0 && !loading && (
-          <div className="p-8 text-center font-mono text-xs text-gray-500">
-            No time slots generated for this date.
-          </div>
-        )}
+          if (isFull) {
+            return (
+              <button
+                key={slot.slot_id}
+                disabled={actionLoading}
+                onClick={() => handleJoinWaitlist(slot)}
+                className="px-4 py-2.5 text-sm text-[var(--color-ink-soft)] border-b-2 border-[var(--color-status-full)] hover:text-[var(--color-ink)] transition-colors"
+              >
+                {label} · Join waitlist
+              </button>
+            )
+          }
+
+          return (
+            <div key={slot.slot_id} className="px-4 py-2.5 text-sm text-[var(--color-ink-soft)]/50 line-through">
+              {label}
+            </div>
+          )
+        })}
+      </div>
+
+      {slots.length === 0 && !loading && (
+        <p className="py-10 text-center text-sm text-[var(--color-ink-soft)]">
+          No time slots generated for this date.
+        </p>
+      )}
       </div>
 
       {/* Confirmation / Claim Modal */}
       {selectedSlot && facility && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded-md max-w-md w-full font-mono shadow-2xl">
-            <div className="flex justify-between items-start border-b border-[#2D373E] pb-3 mb-4">
-              <h3 className="text-base font-bold text-white uppercase">
-                {offeredWaitlistEntry ? 'CLAIM WAITLIST SLOT' : 'CONFIRM BOOKING'}
+        <div className="fixed inset-0 bg-[var(--color-forest-deep)]/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--color-paper)] max-w-md w-full p-8 rounded-sm shadow-2xl">
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="font-[var(--font-display)] text-2xl text-[var(--color-ink)]">
+                {offeredWaitlistEntry ? 'Claim your slot' : 'Confirm booking'}
               </h3>
               <button
                 onClick={() => setSelectedSlot(null)}
-                className="text-gray-500 hover:text-white text-sm"
+                className="text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] text-lg leading-none"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex flex-col gap-3 text-xs text-gray-300 mb-6 bg-[#121619] p-4 border border-[#2D373E] rounded">
+            <div className="flex flex-col gap-2.5 text-sm mb-8 pb-6 hair">
               <div className="flex justify-between">
-                <span className="text-gray-500">FACILITY:</span>
-                <span className="font-bold text-white">{facility.name}</span>
+                <span className="text-[var(--color-ink-soft)]">Facility</span>
+                <span className="text-[var(--color-ink)] font-medium">{facility.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">DATE:</span>
-                <span className="text-white">{selectedDate}</span>
+                <span className="text-[var(--color-ink-soft)]">Date</span>
+                <span className="text-[var(--color-ink)]">{selectedDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">TIME SLOT:</span>
-                <span className="text-[#C97A2B] font-bold">
+                <span className="text-[var(--color-ink-soft)]">Time</span>
+                <span className="text-[var(--color-ember)] font-medium">
                   {formatTime(selectedSlot.start_time)} – {formatTime(selectedSlot.end_time)}
                 </span>
               </div>
-
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setSelectedSlot(null)}
-                className="flex-1 bg-[#121619] border border-[#2D373E] hover:border-gray-500 text-gray-300 font-bold uppercase text-xs py-2.5 rounded transition-colors"
+                className="flex-1 btn-ghost text-sm py-2.5"
               >
                 Cancel
               </button>
               <button
                 disabled={actionLoading}
                 onClick={handleConfirmAction}
-                className="flex-1 bg-[#1F4B3F] hover:bg-[#2A6354] text-white font-bold uppercase text-xs py-2.5 rounded transition-colors flex items-center justify-center gap-2 border border-[#2A6354]"
+                className="flex-1 btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
               >
                 {actionLoading ? (
-                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
                 ) : offeredWaitlistEntry ? (
-                  'Confirm Claim'
+                  'Confirm claim'
                 ) : (
-                  'Confirm Slot'
+                  'Confirm slot'
                 )}
               </button>
             </div>

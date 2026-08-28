@@ -1,47 +1,133 @@
 @import "tailwindcss";
 
 @theme {
-  --color-court-green: #1F4B3F;
-  --color-court-green-dark: #16372E;
-  --color-court-green-light: #2A6354;
-  --color-chalk-amber: #C97A2B;
-  --color-chalk-amber-hover: #B06922;
-  --color-ink-black: #1B1F23;
-  --color-board-dark: #121619;
-  --color-board-card: #1A2024;
-  --color-court-line: #2D373E;
-  --color-status-open: #10B981;
-  --color-status-filling: #F59E0B;
-  --color-status-full: #EF4444;
-  --font-display: 'Barlow Condensed', 'Oswald', sans-serif;
-  --font-body: 'Inter', 'Source Sans 3', system-ui, sans-serif;
+  /* Dominant surfaces */
+  --color-forest: #123A2C;
+  --color-forest-deep: #0A2018;
+  --color-forest-soft: #1B4E3B;
+  --color-paper: #F6F1E6;
+  --color-paper-dim: #ECE4D2;
+
+  /* Text */
+  --color-ink: #17231C;
+  --color-ink-soft: #52604F;
+  --color-cream: #F3EEE1;
+  --color-cream-soft: #C9CDBE;
+
+  /* The one accent, used sparingly and deliberately */
+  --color-ember: #E1531F;
+  --color-ember-hover: #C6461A;
+
+  /* Status vocabulary — muted, not saturated traffic-light colors */
+  --color-status-open: #2E6B47;
+  --color-status-filling: #B4791E;
+  --color-status-full: #A23D2C;
+
+  /* Hairlines */
+  --color-hair: #DCD2B8;
+  --color-hair-dark: rgba(243, 238, 225, 0.16);
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-tag: 'JetBrains Mono', 'SF Mono', monospace;
 }
 
 @layer base {
   :root {
-    --court-green: #1F4B3F;
-    --chalk-amber: #C97A2B;
-    --ink-black: #1B1F23;
     font-family: var(--font-body);
-    color: #1B1F23;
-    background-color: #F8F9FA;
   }
 
   body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background-color: #0F1417;
-    color: #F3F4F6;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 450;
+    letter-spacing: -0.01em;
+  }
+
+  input, select, textarea {
+    font-family: var(--font-body);
+  }
+
+  ::selection {
+    background: var(--color-ember);
+    color: var(--color-cream);
   }
 }
 
-/* Scoreboard style court-line borders and markers */
-.court-border {
-  border: 1px solid var(--color-court-line);
-}
+@layer components {
+  /* A single hairline, used deliberately instead of boxing every element */
+  .hair {
+    border-bottom: 1px solid var(--color-hair);
+  }
+  .hair-dark {
+    border-bottom: 1px solid var(--color-hair-dark);
+  }
 
-.court-card {
-  background-color: var(--color-board-card);
-  border: 1px solid var(--color-court-line);
+  .eyebrow {
+    font-family: var(--font-tag);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background-color: var(--color-ember);
+    color: var(--color-cream);
+    font-weight: 600;
+    border-radius: 3px;
+    transition: background-color 150ms ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-ember-hover);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    color: var(--color-ink-soft);
+    font-weight: 500;
+    transition: color 150ms ease;
+  }
+  .btn-ghost:hover {
+    color: var(--color-ink);
+  }
+
+  .field-underline {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--color-hair);
+    color: var(--color-ink);
+    padding: 0.55rem 0.1rem;
+    transition: border-color 150ms ease;
+  }
+  .field-underline:focus {
+    outline: none;
+    border-color: var(--color-ember);
+  }
+  .field-underline::placeholder {
+    color: var(--color-ink-soft);
+    opacity: 0.6;
+  }
+
+  .field-underline-dark {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--color-hair-dark);
+    color: var(--color-cream);
+    padding: 0.55rem 0.1rem;
+    transition: border-color 150ms ease;
+  }
+  .field-underline-dark:focus {
+    outline: none;
+    border-color: var(--color-ember);
+  }
 }

@@ -68,7 +68,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F1417] text-[#F3F4F6] font-sans flex flex-col relative">
+    <div className="min-h-screen bg-[var(--color-paper)] text-[var(--color-ink)] flex flex-col relative">
       <Header
         currentTab={currentTab}
         onNavigate={handleNavigate}
@@ -81,6 +81,7 @@ export function App() {
           <LoginView
             onClose={() => setIsGuestMode(true)}
             promptMessage="Sign in or continue as guest to browse facility availability."
+            fullPage
           />
         ) : (
           <>
@@ -106,7 +107,7 @@ export function App() {
 
       {/* Action-Triggered Auth Modal */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-forest-deep)]/85 backdrop-blur-sm p-4">
           <div className="w-full max-w-md">
             <LoginView
               onClose={handleCloseAuthModal}
@@ -116,8 +117,11 @@ export function App() {
         </div>
       )}
 
-      <footer className="border-t border-[#2D373E] bg-[#121619] px-6 py-4 text-center text-xs font-mono text-gray-500 mt-auto">
-        Lockin Platform • Core Student Experience & Admin Ops • IIT Guwahati Sports Board
+      <footer className="bg-[var(--color-forest)] px-6 md:px-10 py-6 mt-auto">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <span className="eyebrow text-[var(--color-cream-soft)]">Lockin — IIT Guwahati Sports Board</span>
+          <span className="eyebrow text-[var(--color-cream-soft)]/70">Core booking &amp; ops</span>
+        </div>
       </footer>
     </div>
   )

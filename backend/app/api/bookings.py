@@ -338,10 +338,22 @@ async def execute_checkin(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"ok": False, "reason": "invalid_token"},
             )
-        elif reason in ("too_early", "checkin_window_expired", "checkin_window_closed"):
+        elif reason == "too_early":
+            msg = res.get("message") or "⚠️ Warning: Check-in is only permitted starting 15 minutes before your reserved slot time."
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"ok": False, "reason": reason},
+                detail={
+                    "ok": False,
+                    "reason": "too_early",
+                    "message": msg,
+                    "minutes_remaining": res.get("minutes_remaining"),
+                    "window_start": res.get("window_start"),
+                },
+            )
+        elif reason in ("checkin_window_expired", "checkin_window_closed"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"ok": False, "reason": reason, "message": "Check-in window has closed or expired."},
             )
         elif reason == "booking_not_confirmed":
             raise HTTPException(

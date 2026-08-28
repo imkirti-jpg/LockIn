@@ -22,6 +22,7 @@ interface AuthContextType {
   resetPasswordForEmail: (email: string) => Promise<{ success: boolean; error?: string }>
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>
   resendConfirmationEmail: (email: string) => Promise<{ success: boolean; error?: string }>
+  loginDemoUser: (role?: 'student' | 'sports_admin') => Promise<{ success: boolean }>
   logout: () => Promise<void>
   isAuthenticated: boolean
   isAdmin: boolean
@@ -273,6 +274,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const loginDemoUser = async (role: 'student' | 'sports_admin' = 'student') => {
+    const isSportsAdmin = role === 'sports_admin'
+    const demoId = isSportsAdmin ? '99999999-9999-9999-9999-999999999999' : '11111111-1111-1111-1111-111111111111'
+    const demoEmail = isSportsAdmin ? 'admin@iitg.ac.in' : 'student@iitg.ac.in'
+    const demoToken = demoId
+
+    const demoUser: User = {
+      id: demoId,
+      email: demoEmail,
+      role: isSportsAdmin ? 'sports_admin' : 'student',
+      isAdmin: isSportsAdmin,
+    }
+
+    setUser(demoUser)
+    setToken(demoToken)
+    localStorage.setItem('lockin_user', JSON.stringify(demoUser))
+    localStorage.setItem('lockin_token', demoToken)
+    return { success: true }
+  }
+
   const logout = async () => {
     try {
       await supabaseAuth.auth.signOut()
@@ -295,6 +316,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPasswordForEmail,
         updatePassword,
         resendConfirmationEmail,
+        loginDemoUser,
         logout,
         isAuthenticated: !!user,
         isAdmin: !!user?.isAdmin,

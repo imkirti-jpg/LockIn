@@ -10,31 +10,41 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ currentTab, onNavigate, onRequestAuth }) => {
   const { user, logout, isAuthenticated, isAdmin } = useAuth()
 
-  return (
-    <header className="border-b border-[#2D373E] bg-[#121619] px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-      <div className="flex items-center gap-4 cursor-pointer" onClick={() => onNavigate('facilities')}>
-        <div className="w-3.5 h-3.5 bg-[#C97A2B] rounded-sm animate-pulse" />
-        <h1 className="text-xl font-bold tracking-tight text-[#F3F4F6] uppercase font-mono flex items-center gap-2">
-          LOCKIN
-          <span className="text-[#C97A2B] text-xs font-normal uppercase tracking-widest bg-[#1F4B3F]/40 px-2 py-0.5 border border-[#1F4B3F] rounded">
-            IIT GUWAHATI
-          </span>
-        </h1>
-      </div>
+  const NavLink: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({
+    active,
+    onClick,
+    children,
+  }) => (
+    <button
+      onClick={onClick}
+      className={`relative pb-0.5 text-[15px] transition-colors ${
+        active ? 'text-[var(--color-cream)]' : 'text-[var(--color-cream-soft)] hover:text-[var(--color-cream)]'
+      }`}
+    >
+      {children}
+      {active && <span className="absolute left-0 right-0 -bottom-1 h-[2px] bg-[var(--color-ember)] rounded-full" />}
+    </button>
+  )
 
-      <div className="flex items-center gap-6 font-mono text-xs">
-        <nav className="flex items-center gap-2 bg-[#1A2024] p-1 border border-[#2D373E] rounded">
-          <button
-            onClick={() => onNavigate('facilities')}
-            className={`px-3 py-1.5 rounded uppercase font-semibold transition-colors ${
-              currentTab === 'facilities' || currentTab === 'detail'
-                ? 'bg-[#1F4B3F] text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
+  return (
+    <header className="bg-[var(--color-forest)] sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between gap-6">
+        <div
+          className="flex items-baseline gap-3 cursor-pointer shrink-0"
+          onClick={() => onNavigate('facilities')}
+        >
+          <h1 className="font-[var(--font-display)] italic text-[26px] leading-none text-[var(--color-cream)]">
+            Lockin
+          </h1>
+          <span className="eyebrow text-[var(--color-cream-soft)] hidden sm:inline">IIT Guwahati</span>
+        </div>
+
+        <nav className="flex items-center gap-7">
+          <NavLink active={currentTab === 'facilities' || currentTab === 'detail'} onClick={() => onNavigate('facilities')}>
             Facilities
-          </button>
-          <button
+          </NavLink>
+          <NavLink
+            active={currentTab === 'bookings'}
             onClick={() => {
               if (isAuthenticated) {
                 onNavigate('bookings')
@@ -42,43 +52,33 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onNavigate, onReques
                 onRequestAuth('Sign in to view your court reservations.')
               }
             }}
-            className={`px-3 py-1.5 rounded uppercase font-semibold transition-colors ${
-              currentTab === 'bookings' ? 'bg-[#1F4B3F] text-white' : 'text-gray-400 hover:text-white'
-            }`}
           >
             My Bookings
-          </button>
+          </NavLink>
           {isAuthenticated && isAdmin && (
-            <button
-              onClick={() => onNavigate('admin')}
-              className={`px-3 py-1.5 rounded uppercase font-semibold transition-colors ${
-                currentTab === 'admin' ? 'bg-[#C97A2B] text-black font-bold' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Admin Ops
-            </button>
+            <NavLink active={currentTab === 'admin'} onClick={() => onNavigate('admin')}>
+              Ops Console
+            </NavLink>
           )}
         </nav>
 
         {isAuthenticated ? (
-          <div className="flex items-center gap-3 text-gray-400 border-l border-[#2D373E] pl-4">
-            <span className="text-[#10B981] font-semibold">{user?.email}</span>
+          <div className="flex items-center gap-4 shrink-0">
+            <span className="hidden md:inline text-sm text-[var(--color-cream-soft)]">{user?.email}</span>
             <button
               onClick={logout}
-              className="text-gray-500 hover:text-red-400 underline transition-colors"
+              className="eyebrow text-[var(--color-cream-soft)] hover:text-[var(--color-ember)] transition-colors"
             >
-              Sign Out
+              Sign out
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 border-l border-[#2D373E] pl-4">
-            <button
-              onClick={() => onRequestAuth && onRequestAuth()}
-              className="bg-[#1F4B3F] hover:bg-[#2A6354] text-white font-bold uppercase px-3 py-1.5 rounded transition-colors border border-[#2A6354]"
-            >
-              Sign In / Register
-            </button>
-          </div>
+          <button
+            onClick={() => onRequestAuth && onRequestAuth()}
+            className="btn-primary text-sm px-4 py-2 shrink-0"
+          >
+            Sign in
+          </button>
         )}
       </div>
     </header>

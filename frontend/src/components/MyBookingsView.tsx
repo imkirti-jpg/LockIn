@@ -78,9 +78,28 @@ export const MyBookingsView: React.FC = () => {
     }
   }
 
+  const isCheckinEarly = (slotStartIso: string) => {
+    const startMs = new Date(slotStartIso).getTime()
+    const windowOpenMs = startMs - 15 * 60 * 1000
+    return Date.now() < windowOpenMs
+  }
+
+  const getEarlyMinutesLeft = (slotStartIso: string) => {
+    const startMs = new Date(slotStartIso).getTime()
+    const windowOpenMs = startMs - 15 * 60 * 1000
+    const diffMs = windowOpenMs - Date.now()
+    return Math.max(1, Math.ceil(diffMs / (60 * 1000)))
+  }
+
   const handleExecuteCheckin = async (booking: Booking) => {
     if (!booking.checkin_token) {
       setActionMessage('Check-in token not available.')
+      return
+    }
+
+    if (isCheckinEarly(booking.slot_start)) {
+      const mins = getEarlyMinutesLeft(booking.slot_start)
+      setActionMessage(`⚠️ Warning: You are attempting to check in too early. Check-in opens 15 minutes before your slot start time (${mins} mins remaining).`)
       return
     }
 
@@ -96,10 +115,12 @@ export const MyBookingsView: React.FC = () => {
       }
     } catch (err: any) {
       const reason = err.data?.detail?.reason || 'Check-in failed.'
+      const customMsg = err.data?.detail?.message || err.data?.message
       if (reason === 'too_early') {
-        setActionMessage('Check-in window opens 15 minutes before slot start.')
+        const mins = err.data?.detail?.minutes_remaining
+        setActionMessage(customMsg || `⚠️ Warning: Check-in is only allowed within 15 minutes of slot start time.${mins ? ` (${mins} mins remaining)` : ''}`)
       } else if (reason === 'checkin_window_expired') {
-        setActionMessage('Check-in grace period expired. Booking was released.')
+        setActionMessage('⚠️ Check-in window expired. Booking was released.')
       } else {
         setActionMessage(`Check-in failed: ${reason}`)
       }
@@ -123,9 +144,9 @@ export const MyBookingsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-gray-400 font-mono gap-3">
-        <div className="w-6 h-6 border-2 border-[#C97A2B] border-t-transparent rounded-full animate-spin" />
-        Loading your reservations...
+      <div className="flex flex-col items-center justify-center py-24 text-[var(--color-ink-soft)] gap-3">
+        <div className="w-5 h-5 border-2 border-[var(--color-ember)] border-t-transparent rounded-full animate-spin" />
+        <span className="eyebrow">Loading reservations</span>
       </div>
     )
   }
@@ -134,41 +155,30 @@ export const MyBookingsView: React.FC = () => {
   const activeWaitlists = waitlists.filter((w) => ['waiting', 'offered'].includes(w.status))
 
   return (
-    <div className="max-w-4xl mx-auto p-6 flex flex-col gap-6 font-mono">
-      <div className="bg-[#1A2024] border border-[#2D373E] p-4 rounded flex justify-between items-center">
+    <div className="max-w-4xl mx-auto px-6 md:px-10 py-14">
+      <div className="flex items-end justify-between mb-10">
         <div>
-          <span className="text-xs uppercase text-[#C97A2B]">MY RESERVATIONS</span>
-          <h2 className="text-lg font-bold text-white">IIT Guwahati Student Dashboard</h2>
+          <span className="eyebrow text-[var(--color-ember)]">My Reservations</span>
+          <h2 className="font-[var(--font-display)] text-[40px] leading-tight text-[var(--color-ink)]">
+            Your schedule
+          </h2>
         </div>
-        <button
-          onClick={loadData}
-          className="text-xs text-gray-400 hover:text-white border border-[#2D373E] px-3 py-1.5 rounded"
-        >
-          Refresh List
+        <button onClick={loadData} className="btn-ghost text-sm">
+          Refresh
         </button>
       </div>
 
-      {actionMessage && (
-        <div className="bg-[#16372E] border border-[#1F4B3F] text-emerald-300 p-3 rounded text-xs">
-          {actionMessage}
-        </div>
-      )}
+      {actionMessage && <p className="mb-6 text-sm text-[var(--color-status-open)]">{actionMessage}</p>}
+      {error && <p className="mb-6 text-sm text-[var(--color-status-full)]">{error}</p>}
 
-      {error && (
-        <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded text-xs">
-          {error}
-        </div>
-      )}
-
-      {/* Active Waitlists Section (Phase 5.1) */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded">
-        <h3 className="text-xs font-mono uppercase text-[#C97A2B] mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 bg-[#C97A2B] rounded-full animate-pulse" />
-          Active Waitlists ({activeWaitlists.length})
+      {/* Active Waitlists */}
+      <section className="mb-12">
+        <h3 className="eyebrow text-[var(--color-ink-soft)] mb-4">
+          Active waitlists ({activeWaitlists.length})
         </h3>
 
-        <div className="flex flex-col gap-3">
-          {activeWaitlists.map((w) => {
+        <div>
+          {activeWaitlists.map((w, i) => {
             const startFormat = formatDateTime(w.slot_start)
             const isOffered = w.status === 'offered'
             const fac = getFacilityInfo(w.facility_id)
@@ -176,39 +186,34 @@ export const MyBookingsView: React.FC = () => {
             return (
               <div
                 key={w.id}
-                className={`p-4 rounded border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  isOffered
-                    ? 'bg-[#2A1D0E] border-[#C97A2B]'
-                    : 'bg-[#121619] border-[#2D373E]'
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 ${
+                  i !== activeWaitlists.length - 1 ? 'hair' : ''
                 }`}
               >
                 <div>
-                  <div className="text-xs font-bold text-[#C97A2B] uppercase mb-0.5">{fac.name} ({fac.sport})</div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-white">{startFormat.date}</span>
-                    <span className="text-xs text-[#C97A2B] font-bold">{startFormat.time}</span>
+                  <div className="text-sm text-[var(--color-ink-soft)] capitalize mb-0.5">
+                    {fac.name} · {fac.sport}
                   </div>
-                  <div className="text-[11px] text-gray-400">
-                    Queue Position: <span className="font-bold text-white">#{w.position} in line</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--color-ink)] font-medium">{startFormat.date}</span>
+                    <span className="text-[var(--color-ember)]">{startFormat.time}</span>
+                    <span className="text-sm text-[var(--color-ink-soft)]">· #{w.position} in line</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span
-                    className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded ${
-                      isOffered
-                        ? 'bg-[#C97A2B] text-black font-bold animate-pulse'
-                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    }`}
+                    className="text-sm font-medium"
+                    style={{ color: isOffered ? 'var(--color-ember)' : 'var(--color-status-filling)' }}
                   >
-                    {isOffered ? 'CLAIM AVAILABLE' : `WAITLISTED (#${w.position})`}
+                    {isOffered ? 'Claim available' : `Waitlisted #${w.position}`}
                   </span>
                   <button
                     disabled={cancellingId === w.id}
                     onClick={() => handleCancelWaitlist(w.id)}
-                    className="text-xs bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 px-3 py-1.5 rounded transition-colors"
+                    className="btn-ghost text-sm"
                   >
-                    Leave Queue
+                    Leave queue
                   </button>
                 </div>
               </div>
@@ -216,22 +221,19 @@ export const MyBookingsView: React.FC = () => {
           })}
 
           {activeWaitlists.length === 0 && (
-            <div className="p-4 text-center text-xs text-gray-500 border border-dashed border-[#2D373E] rounded">
-              No active waitlist positions.
-            </div>
+            <p className="py-4 text-sm text-[var(--color-ink-soft)]">No active waitlist positions.</p>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Upcoming Active Bookings */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded">
-        <h3 className="text-xs font-mono uppercase text-gray-400 mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-          Active Court Bookings ({activeBookings.length})
+      {/* Active Bookings */}
+      <section>
+        <h3 className="eyebrow text-[var(--color-ink-soft)] mb-4">
+          Active bookings ({activeBookings.length})
         </h3>
 
-        <div className="flex flex-col gap-3">
-          {activeBookings.map((b) => {
+        <div>
+          {activeBookings.map((b, i) => {
             const startFormat = formatDateTime(b.slot_start)
             const endFormat = formatDateTime(b.slot_end)
             const isCheckedIn = b.status === 'checked_in'
@@ -240,40 +242,39 @@ export const MyBookingsView: React.FC = () => {
             return (
               <div
                 key={b.id}
-                className="bg-[#121619] border border-[#2D373E] p-4 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 ${
+                  i !== activeBookings.length - 1 ? 'hair' : ''
+                }`}
               >
                 <div>
-                  <div className="text-xs font-bold text-[#C97A2B] uppercase mb-0.5">{fac.name} • {fac.sport}</div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-white">{startFormat.date}</span>
-                    <span className="text-xs text-[#C97A2B] font-bold">
+                  <div className="text-sm text-[var(--color-ink-soft)] capitalize mb-0.5">
+                    {fac.name} · {fac.sport}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--color-ink)] font-medium">{startFormat.date}</span>
+                    <span className="text-[var(--color-ember)]">
                       {startFormat.time} – {endFormat.time}
                     </span>
                   </div>
-                  <div className="text-[11px] text-gray-500 truncate max-w-sm">
-                    ID: {b.id} {isCheckedIn && `• Checked in at ${formatDateTime(b.checked_in_at || '').time}`}
-                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {isCheckedIn ? (
-                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded">
-                      ✓ CHECKED IN
-                    </span>
+                    <span className="text-sm font-medium text-[var(--color-status-open)]">✓ Checked in</span>
                   ) : (
                     <>
                       <button
                         onClick={() => setSelectedQrBooking(b)}
-                        className="text-xs bg-[#C97A2B] hover:bg-[#D98A3B] text-black font-bold px-3 py-1.5 rounded transition-colors"
+                        className="btn-primary text-sm px-3 py-1.5"
                       >
-                        SHOW QR
+                        Show QR
                       </button>
                       <button
                         disabled={cancellingId === b.id}
                         onClick={() => handleCancelBooking(b.id)}
-                        className="text-xs bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 px-3 py-1.5 rounded transition-colors"
+                        className="btn-ghost text-sm"
                       >
-                        {cancellingId === b.id ? 'Cancelling...' : 'Cancel'}
+                        {cancellingId === b.id ? 'Cancelling…' : 'Cancel'}
                       </button>
                     </>
                   )}
@@ -283,52 +284,45 @@ export const MyBookingsView: React.FC = () => {
           })}
 
           {activeBookings.length === 0 && (
-            <div className="p-6 text-center text-xs text-gray-500 border border-dashed border-[#2D373E] rounded">
-              No active court bookings.
-            </div>
+            <p className="py-4 text-sm text-[var(--color-ink-soft)]">No active court bookings.</p>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* QR Code Modal (Phase 5.2) */}
+      {/* QR Code Modal */}
       {selectedQrBooking && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded-md max-w-sm w-full font-mono shadow-2xl text-center">
-            <div className="flex justify-between items-center border-b border-[#2D373E] pb-3 mb-4">
-              <h3 className="text-sm font-bold text-white uppercase">LOCKIN CHECK-IN CREDENTIAL</h3>
+        <div className="fixed inset-0 bg-[var(--color-forest-deep)]/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--color-paper)] max-w-sm w-full p-8 rounded-sm shadow-2xl text-center">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-[var(--font-display)] text-xl text-[var(--color-ink)]">Check-in credential</h3>
               <button
                 onClick={() => setSelectedQrBooking(null)}
-                className="text-gray-500 hover:text-white text-sm"
+                className="text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] text-lg leading-none"
               >
                 ✕
               </button>
             </div>
 
-            <div className="bg-[#121619] p-4 border border-[#2D373E] rounded flex flex-col items-center gap-3 mb-4">
-              {/* Scoreboard QR Code Frame */}
-              <div className="w-44 h-44 bg-white p-3 rounded flex flex-col items-center justify-center border-4 border-[#C97A2B]">
-                <div className="w-full h-full bg-[#121619] border-2 border-dashed border-gray-400 flex flex-col items-center justify-center p-2 text-center">
-                  <span className="text-[10px] text-[#C97A2B] font-bold tracking-widest uppercase mb-1">
-                    LOCKIN QR
-                  </span>
-                  <div className="text-[9px] text-[#C97A2B] font-bold tracking-widest uppercase">
-                    SCANNABLE ACCESS TOKEN
-                  </div>
-                </div>
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="w-40 h-40 bg-white border-2 border-[var(--color-ember)] rounded-sm flex flex-col items-center justify-center p-3 text-center">
+                <span className="eyebrow text-[var(--color-ember)]">Lockin QR</span>
+                <span className="eyebrow text-[var(--color-ink-soft)] mt-1">Scannable access token</span>
               </div>
 
-              <div className="text-[11px] text-gray-300 flex flex-col gap-1 w-full text-left font-mono">
+              <div className="text-sm text-[var(--color-ink-soft)] flex flex-col gap-1 w-full text-left">
                 <div>
-                  <span className="text-gray-500">FACILITY:</span>{' '}
-                  <span className="font-bold text-white">{getFacilityInfo(selectedQrBooking.facility_id).name}</span>
+                  <span className="text-[var(--color-ink-soft)]">Facility: </span>
+                  <span className="text-[var(--color-ink)] font-medium">
+                    {getFacilityInfo(selectedQrBooking.facility_id).name}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">DATE:</span>{' '}
+                  <span className="text-[var(--color-ink-soft)]">Date: </span>
                   {formatDateTime(selectedQrBooking.slot_start).date}
                 </div>
                 <div>
-                  <span className="text-gray-500">TIME:</span>{' '}
-                  <span className="text-[#C97A2B]">
+                  <span className="text-[var(--color-ink-soft)]">Time: </span>
+                  <span className="text-[var(--color-ember)]">
                     {formatDateTime(selectedQrBooking.slot_start).time} –{' '}
                     {formatDateTime(selectedQrBooking.slot_end).time}
                   </span>
@@ -336,22 +330,22 @@ export const MyBookingsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => setSelectedQrBooking(null)}
-                className="flex-1 bg-[#121619] border border-[#2D373E] text-gray-400 hover:text-white font-bold uppercase text-xs py-2.5 rounded"
+                className="flex-1 btn-ghost text-sm py-2.5"
               >
                 Close
               </button>
               <button
                 disabled={checkinLoading}
                 onClick={() => handleExecuteCheckin(selectedQrBooking)}
-                className="flex-1 bg-[#1F4B3F] hover:bg-[#2A6354] text-white font-bold uppercase text-xs py-2.5 rounded border border-[#2A6354] flex items-center justify-center gap-2"
+                className="flex-1 btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
               >
                 {checkinLoading ? (
-                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
                 ) : (
-                  'VERIFY CHECK-IN'
+                  'Verify check-in'
                 )}
               </button>
             </div>

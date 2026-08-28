@@ -56,7 +56,7 @@ export const AdminDashboardView: React.FC = () => {
     try {
       const res = await api.updateFacilityStatus(facilityId, newStatus, token)
       if (res.ok) {
-        setActionMessage(`Facility status updated to ${newStatus.toUpperCase()}`)
+        setActionMessage(`Facility status updated to ${newStatus}.`)
         await loadData()
       }
     } catch (err: any) {
@@ -86,7 +86,7 @@ export const AdminDashboardView: React.FC = () => {
       if (res.ok) {
         let msg = `Facility block created successfully.`
         if (res.affected_bookings_count > 0) {
-          msg += ` WARNING: This block overlaps ${res.affected_bookings_count} confirmed student bookings!`
+          msg += ` Warning: overlaps ${res.affected_bookings_count} confirmed student bookings.`
         }
         setActionMessage(msg)
         setBlockReason('')
@@ -124,115 +124,138 @@ export const AdminDashboardView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-gray-400 font-mono gap-3">
-        <div className="w-6 h-6 border-2 border-[#C97A2B] border-t-transparent rounded-full animate-spin" />
-        Loading Admin Operations Console...
+      <div className="flex flex-col items-center justify-center py-24 text-[var(--color-ink-soft)] gap-3">
+        <div className="w-5 h-5 border-2 border-[var(--color-ember)] border-t-transparent rounded-full animate-spin" />
+        <span className="eyebrow">Loading ops console</span>
       </div>
     )
   }
 
   if (error && error.includes('403')) {
     return (
-      <div className="max-w-2xl mx-auto p-12 font-mono text-center">
-        <div className="bg-red-950/40 border border-red-800 p-8 rounded text-red-300 flex flex-col items-center gap-3">
-          <span className="text-3xl">🚫</span>
-          <h2 className="text-lg font-bold">403 FORBIDDEN: ACCESS DENIED</h2>
-          <p className="text-xs text-gray-400">
-            Student account detected. Facility Manager or Sports Admin privileges required to access operational controls.
-          </p>
-        </div>
+      <div className="max-w-lg mx-auto px-6 py-24 text-center">
+        <h2 className="font-[var(--font-display)] text-3xl text-[var(--color-status-full)] mb-3">Access denied</h2>
+        <p className="text-sm text-[var(--color-ink-soft)]">
+          Student account detected. Facility manager or Sports Board admin privileges are required to view operational controls.
+        </p>
       </div>
     )
   }
 
+  const inputCls = 'field-underline w-full text-[var(--color-ink)]'
+  const labelCls = 'text-sm text-[var(--color-ink-soft)] block mb-1.5'
+
   return (
-    <div className="max-w-5xl mx-auto p-6 flex flex-col gap-6 font-mono">
-      {/* Admin Ops Header */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-4 rounded flex justify-between items-center">
+    <div className="max-w-5xl mx-auto px-6 md:px-10 py-14">
+      <div className="flex items-end justify-between mb-10">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs uppercase text-[#C97A2B] font-bold">LOCKIN OPERATIONAL OPS</span>
-            <span className="bg-[#C97A2B] text-black font-bold uppercase text-[9px] px-2 py-0.5 rounded">
-              {adminRole?.toUpperCase() || 'SPORTS ADMIN'}
-            </span>
-          </div>
-          <h2 className="text-lg font-bold text-white">IIT Guwahati Facility Operations Console</h2>
+          <span className="eyebrow text-[var(--color-ember)]">{adminRole || 'Sports Admin'}</span>
+          <h2 className="font-[var(--font-display)] text-[40px] leading-tight text-[var(--color-ink)]">
+            Ops console
+          </h2>
         </div>
-        <button
-          onClick={loadData}
-          className="text-xs text-gray-400 hover:text-white border border-[#2D373E] px-3 py-1.5 rounded"
-        >
-          Refresh Ops Data
+        <button onClick={loadData} className="btn-ghost text-sm">
+          Refresh
         </button>
       </div>
 
-      {actionMessage && (
-        <div className="bg-[#16372E] border border-[#1F4B3F] text-emerald-300 p-3 rounded text-xs">
-          {actionMessage}
-        </div>
+      {actionMessage && <p className="mb-8 text-sm text-[var(--color-status-open)]">{actionMessage}</p>}
+
+      {/* Operational Analytics — typographic stat row, not four identical cards */}
+      {analytics && (
+        <section className="mb-14 pb-10 hair">
+          <h3 className="eyebrow text-[var(--color-ink-soft)] mb-6">
+            Utilization · {analytics.from_date} to {analytics.to_date}
+          </h3>
+          <div className="flex flex-wrap gap-x-14 gap-y-8">
+            <div>
+              <div className="font-[var(--font-display)] text-5xl text-[var(--color-ink)]">
+                {analytics.total_bookings}
+              </div>
+              <span className="eyebrow text-[var(--color-ink-soft)]">Total bookings</span>
+            </div>
+            <div>
+              <div className="font-[var(--font-display)] text-5xl text-[var(--color-status-full)]">
+                {analytics.no_show_rate_percent}%
+              </div>
+              <span className="eyebrow text-[var(--color-ink-soft)]">No-show rate</span>
+            </div>
+            <div>
+              <div className="font-[var(--font-display)] text-5xl text-[var(--color-ember)]">
+                {analytics.peak_hour}
+              </div>
+              <span className="eyebrow text-[var(--color-ink-soft)]">Peak hour</span>
+            </div>
+            <div>
+              <div className="font-[var(--font-display)] text-3xl text-[var(--color-status-open)] max-w-[14ch] leading-tight">
+                {analytics.top_facility}
+              </div>
+              <span className="eyebrow text-[var(--color-ink-soft)]">Top facility</span>
+            </div>
+          </div>
+        </section>
       )}
 
-      {/* Facilities Status & Controls Grid */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded">
-        <h3 className="text-xs uppercase text-gray-400 mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-          Facility Status & Live Control ({facilities.length})
+      {/* Facility Status & Control */}
+      <section className="mb-14 pb-10 hair">
+        <h3 className="eyebrow text-[var(--color-ink-soft)] mb-4">
+          Facility control ({facilities.length})
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {facilities.map((fac) => (
-            <div key={fac.id} className="bg-[#121619] border border-[#2D373E] p-4 rounded flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] text-[#C97A2B] uppercase font-bold">{fac.sport_type}</span>
-                  <h4 className="text-sm font-bold text-white">{fac.name}</h4>
-                </div>
+        <div>
+          {facilities.map((fac, i) => (
+            <div
+              key={fac.id}
+              className={`flex items-center justify-between gap-4 py-4 ${
+                i !== facilities.length - 1 ? 'hair' : ''
+              }`}
+            >
+              <div>
+                <span className="eyebrow text-[var(--color-ember)]">{fac.sport_type}</span>
+                <h4 className="font-[var(--font-display)] text-xl text-[var(--color-ink)]">{fac.name}</h4>
+              </div>
+
+              <div className="flex items-center gap-3">
                 <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                    fac.status === 'open'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : fac.status === 'maintenance'
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}
+                  className="text-sm capitalize"
+                  style={{
+                    color:
+                      fac.status === 'open'
+                        ? 'var(--color-status-open)'
+                        : fac.status === 'maintenance'
+                        ? 'var(--color-status-filling)'
+                        : 'var(--color-status-full)',
+                  }}
                 >
                   {fac.status}
                 </span>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2 border-t border-[#2D373E]/60 text-xs">
-                <span className="text-gray-500 uppercase text-[10px]">Change Status:</span>
                 <select
                   value={fac.status}
                   onChange={(e) => handleStatusChange(fac.id, e.target.value)}
-                  className="bg-[#1A2024] border border-[#2D373E] text-white px-2 py-1 rounded text-xs focus:outline-none"
+                  className="field-underline text-sm text-[var(--color-ink)] cursor-pointer"
                 >
-                  <option value="open">OPEN</option>
-                  <option value="maintenance">MAINTENANCE</option>
-                  <option value="closed">CLOSED</option>
+                  <option value="open">Open</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="closed">Closed</option>
                 </select>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Block Management Section */}
-      <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded flex flex-col md:flex-row gap-6">
-        {/* Create Block Form */}
-        <div className="flex-1 flex flex-col gap-3">
-          <h3 className="text-xs uppercase text-[#C97A2B] font-bold flex items-center gap-2">
-            <span className="w-2 h-2 bg-[#C97A2B] rounded-full" />
-            Create Facility / Time Block
-          </h3>
+      {/* Block Management */}
+      <section className="mb-14 pb-10 hair grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div>
+          <h3 className="eyebrow text-[var(--color-ember)] mb-5">Create facility block</h3>
 
-          <form onSubmit={handleCreateBlock} className="flex flex-col gap-3 text-xs">
+          <form onSubmit={handleCreateBlock} className="flex flex-col gap-5">
             <div>
-              <label className="text-gray-400 uppercase text-[10px] block mb-1">Target Facility:</label>
+              <label className={labelCls}>Target facility</label>
               <select
                 value={selectedFacilityId}
                 onChange={(e) => setSelectedFacilityId(e.target.value)}
-                className="w-full bg-[#121619] border border-[#2D373E] text-white p-2 rounded focus:outline-none"
+                className={inputCls + ' cursor-pointer'}
               >
                 {facilities.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -242,87 +265,88 @@ export const AdminDashboardView: React.FC = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-gray-400 uppercase text-[10px] block mb-1">Start Time (ISO):</label>
+                <label className={labelCls}>Start time</label>
                 <input
                   type="datetime-local"
                   value={blockStartTime}
                   onChange={(e) => setBlockStartTime(e.target.value)}
-                  className="w-full bg-[#121619] border border-[#2D373E] text-white p-2 rounded focus:outline-none"
+                  className={inputCls}
                 />
               </div>
               <div>
-                <label className="text-gray-400 uppercase text-[10px] block mb-1">End Time (ISO):</label>
+                <label className={labelCls}>End time</label>
                 <input
                   type="datetime-local"
                   value={blockEndTime}
                   onChange={(e) => setBlockEndTime(e.target.value)}
-                  className="w-full bg-[#121619] border border-[#2D373E] text-white p-2 rounded focus:outline-none"
+                  className={inputCls}
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-gray-400 uppercase text-[10px] block mb-1">Block Type:</label>
+              <label className={labelCls}>Block type</label>
               <select
                 value={blockType}
                 onChange={(e) => setBlockType(e.target.value as any)}
-                className="w-full bg-[#121619] border border-[#2D373E] text-white p-2 rounded focus:outline-none"
+                className={inputCls + ' cursor-pointer'}
               >
-                <option value="maintenance">MAINTENANCE</option>
-                <option value="event">TOURNAMENT / EVENT</option>
-                <option value="admin_hold">ADMIN HOLD</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="event">Tournament / event</option>
+                <option value="admin_hold">Admin hold</option>
               </select>
             </div>
 
             <div>
-              <label className="text-gray-400 uppercase text-[10px] block mb-1">Reason / Description:</label>
+              <label className={labelCls}>Reason</label>
               <input
                 type="text"
-                placeholder="e.g. Inter-IIT Badminton Tournament"
+                placeholder="e.g. Inter-IIT badminton tournament"
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                className="w-full bg-[#121619] border border-[#2D373E] text-white p-2 rounded focus:outline-none"
+                className={inputCls}
               />
             </div>
 
             <button
               type="submit"
               disabled={creatingBlock}
-              className="bg-[#1F4B3F] hover:bg-[#2A6354] text-white font-bold uppercase text-xs py-2.5 rounded transition-colors border border-[#2A6354] mt-2"
+              className="btn-primary text-sm py-2.5 mt-1"
             >
-              {creatingBlock ? 'Creating Block...' : 'CREATE FACILITY BLOCK'}
+              {creatingBlock ? 'Creating block…' : 'Create facility block'}
             </button>
           </form>
         </div>
 
-        {/* Active Blocks List */}
-        <div className="flex-1 flex flex-col gap-3">
-          <h3 className="text-xs uppercase text-gray-400 font-bold flex items-center gap-2">
-            Active Administrative Blocks ({blocks.length})
+        <div>
+          <h3 className="eyebrow text-[var(--color-ink-soft)] mb-5">
+            Active blocks ({blocks.length})
           </h3>
 
-          <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
-            {blocks.map((b) => {
+          <div className="flex flex-col max-h-96 overflow-y-auto">
+            {blocks.map((b, i) => {
               const startF = formatDateTime(b.start_time)
               const endF = formatDateTime(b.end_time)
               const fName = facilities.find((f) => f.id === b.facility_id)?.name || 'Facility'
 
               return (
-                <div key={b.id} className="bg-[#121619] border border-[#2D373E] p-3 rounded text-xs flex justify-between items-center">
+                <div
+                  key={b.id}
+                  className={`flex justify-between items-center gap-3 py-3 ${
+                    i !== blocks.length - 1 ? 'hair' : ''
+                  }`}
+                >
                   <div>
-                    <div className="font-bold text-white">{fName}</div>
-                    <div className="text-[10px] text-gray-400 font-mono">
-                      {startF.date} ({startF.time} – {endF.time})
+                    <div className="text-[var(--color-ink)] font-medium">{fName}</div>
+                    <div className="text-sm text-[var(--color-ink-soft)]">
+                      {startF.date} ({startF.time}–{endF.time})
                     </div>
-                    <div className="text-[10px] text-[#C97A2B] uppercase">{b.reason}</div>
+                    <div className="text-sm text-[var(--color-ember)]">{b.reason}</div>
                   </div>
 
-                  <button
-                    onClick={() => handleDeleteBlock(b.id)}
-                    className="text-[10px] bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 px-2 py-1 rounded"
-                  >
+                  <button onClick={() => handleDeleteBlock(b.id)} className="btn-ghost text-sm shrink-0">
                     Remove
                   </button>
                 </div>
@@ -330,42 +354,11 @@ export const AdminDashboardView: React.FC = () => {
             })}
 
             {blocks.length === 0 && (
-              <div className="p-6 text-center text-xs text-gray-500 border border-dashed border-[#2D373E] rounded">
-                No active facility blocks.
-              </div>
+              <p className="py-4 text-sm text-[var(--color-ink-soft)]">No active facility blocks.</p>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Operational Analytics Section */}
-      {analytics && (
-        <div className="bg-[#1A2024] border border-[#2D373E] p-6 rounded flex flex-col gap-4">
-          <h3 className="text-xs uppercase text-gray-400 font-bold flex items-center gap-2">
-            <span className="w-2 h-2 bg-[#C97A2B]" />
-            Operational Metrics & Utilization ({analytics.from_date} to {analytics.to_date})
-          </h3>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-            <div className="bg-[#121619] border border-[#2D373E] p-3 rounded">
-              <span className="text-[10px] text-gray-500 uppercase block">Total Bookings</span>
-              <span className="text-lg font-bold text-white">{analytics.total_bookings}</span>
-            </div>
-            <div className="bg-[#121619] border border-[#2D373E] p-3 rounded">
-              <span className="text-[10px] text-gray-500 uppercase block">No-Show Rate</span>
-              <span className="text-lg font-bold text-red-400">{analytics.no_show_rate_percent}%</span>
-            </div>
-            <div className="bg-[#121619] border border-[#2D373E] p-3 rounded">
-              <span className="text-[10px] text-gray-500 uppercase block">Peak Hour</span>
-              <span className="text-lg font-bold text-[#C97A2B]">{analytics.peak_hour}</span>
-            </div>
-            <div className="bg-[#121619] border border-[#2D373E] p-3 rounded">
-              <span className="text-[10px] text-gray-500 uppercase block">Top Facility</span>
-              <span className="text-xs font-bold text-emerald-400 truncate block mt-1">{analytics.top_facility}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      </section>
     </div>
   )
 }
